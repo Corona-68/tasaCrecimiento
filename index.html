@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modelos de Regresión</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- PDF Generation Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    
+    <script type="module" src="./index.tsx"></script>
+    <style>
+        .glass {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+        .nav-glass {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(229, 231, 235, 0.5);
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+        /* Custom scrollbar for table */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+        .nav-btn.active {
+            background-color: #3b82f6; /* Blue-500 */
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.5);
+        }
+        .nav-btn:not(.active):hover {
+            background-color: #eff6ff; /* Blue-50 */
+            color: #1d4ed8; /* Blue-700 */
+        }
+        /* Animation classes */
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+            opacity: 0;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://esm.sh/@google/genai@^1.32.0"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen flex flex-col">
+
+    <!-- Navbar -->
+    <nav class="fixed top-0 w-full z-50 nav-glass h-16 flex items-center shadow-sm">
+        <div class="container mx-auto px-4 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">T</div>
+                <h1 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 hidden md:block">Modelos de Regresión</h1>
+            </div>
+            
+            <div class="flex gap-2 overflow-x-auto pb-1 md:pb-0 hide-scrollbar">
+                <button data-target="home" class="nav-btn px-4 py-2 rounded-full text-sm font-medium text-slate-600 transition-all duration-300">Inicio</button>
+                <button data-target="data" class="nav-btn px-4 py-2 rounded-full text-sm font-medium text-slate-600 transition-all duration-300">Datos</button>
+                <button data-target="linear" class="nav-btn px-4 py-2 rounded-full text-sm font-medium text-slate-600 transition-all duration-300">Lineal</button>
+                <button data-target="exponential" class="nav-btn px-4 py-2 rounded-full text-sm font-medium text-slate-600 transition-all duration-300">Exponencial</button>
+                <button data-target="logarithmic" class="nav-btn px-4 py-2 rounded-full text-sm font-medium text-slate-600 transition-all duration-300">Logarítmica</button>
+                <button data-target="interpretation" class="nav-btn px-4 py-2 rounded-full text-sm font-medium text-slate-600 transition-all duration-300">Interpretación</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow pt-24 pb-12 container mx-auto px-4">
+        
+        <!-- HOME VIEW -->
+        <section id="view-home" class="view-section animate-fade-in block">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-extrabold text-slate-900 mb-4">Herramienta para obtener la tasa de crecimiento media anual</h2>
+                <p class="text-lg text-slate-600 max-w-2xl mx-auto">Analiza volúmenes de tránsito histórico, calcula proyecciones estadísticas y obtén recomendaciones inteligentes para tus proyectos de ingeniería.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto mb-16">
+                <!-- Datos Card -->
+                <div onclick="document.querySelector('[data-target=data]').click()" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 card-hover cursor-pointer group">
+                    <div class="text-4xl mb-4 group-hover:scale-110 transition-transform duration-300">📝</div>
+                    <h3 class="text-xl font-bold text-slate-800 mb-2">Ingreso de Datos</h3>
+                    <p class="text-slate-500 text-sm">Registra la información de la estación, carretera y volúmenes históricos (TDPA) para iniciar el análisis.</p>
+                </div>
+
+                <!-- Linear Card -->
+                <div onclick="document.querySelector('[data-target=linear]').click()" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 card-hover cursor-pointer group">
+                    <div class="text-4xl mb-4 group-hover:scale-110 transition-transform duration-300">📈</div>
+                    <h3 class="text-xl font-bold text-slate-800 mb-2">Regresión Lineal</h3>
+                    <p class="text-slate-500 text-sm">Modelo de crecimiento aritmético constante. Ideal para tendencias estables a corto plazo.</p>
+                </div>
+
+                <!-- Exponential Card -->
+                <div onclick="document.querySelector('[data-target=exponential]').click()" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 card-hover cursor-pointer group">
+                    <div class="text-4xl mb-4 group-hover:scale-110 transition-transform duration-300">🚀</div>
+                    <h3 class="text-xl font-bold text-slate-800 mb-2">Regresión Exponencial</h3>
+                    <p class="text-slate-500 text-sm">Modelo de crecimiento geométrico. Útil cuando el crecimiento es proporcional al tamaño actual.</p>
+                </div>
+
+                <!-- Logarithmic Card -->
+                <div onclick="document.querySelector('[data-target=logarithmic]').click()" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 card-hover cursor-pointer group">
+                    <div class="text-4xl mb-4 group-hover:scale-110 transition-transform duration-300">📉</div>
+                    <h3 class="text-xl font-bold text-slate-800 mb-2">Regresión Logarítmica</h3>
+                    <p class="text-slate-500 text-sm">Modelo de crecimiento desacelerado. Para escenarios donde la capacidad se acerca a la saturación.</p>
+                </div>
+
+                <!-- Interpretation Card -->
+                <div onclick="document.querySelector('[data-target=interpretation]').click()" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 card-hover cursor-pointer group">
+                    <div class="text-4xl mb-4 group-hover:scale-110 transition-transform duration-300">🤖</div>
+                    <h3 class="text-xl font-bold text-slate-800 mb-2">Interpretación IA</h3>
+                    <p class="text-slate-500 text-sm">Análisis inteligente con Gemini para determinar el mejor modelo y explicar el comportamiento de los datos.</p>
+                </div>
+
+                <!-- Report Card -->
+                <div id="btn-download-pdf-card" class="bg-gradient-to-br from-slate-800 to-slate-900 p-6 rounded-2xl shadow-lg border border-slate-700 card-hover cursor-pointer group text-white">
+                    <div class="text-4xl mb-4 group-hover:scale-110 transition-transform duration-300">📑</div>
+                    <h3 class="text-xl font-bold mb-2">Memoria Ejecutiva</h3>
+                    <p class="text-slate-300 text-sm">Descargar reporte completo en PDF con tablas, gráficas de todos los modelos e interpretación.</p>
+                </div>
+            </div>
+
+            <!-- Developer Profile Section -->
+            <div class="flex justify-center animate-fade-in" style="animation-delay: 0.2s;">
+                <div class="glass px-8 py-5 rounded-full flex flex-col md:flex-row items-center gap-6 hover:scale-[1.02] transition-transform duration-300">
+                    <div class="relative">
+                        <!-- Ensure 'profile.png' exists in your project folder, or it falls back to avatar -->
+                        <img src="./profile.png" onerror="this.src='https://ui-avatars.com/api/?name=Martin+Olvera&background=0D8ABC&color=fff&size=128'" alt="Ing. Martín Olvera Corona" class="w-20 h-20 rounded-full object-cover shadow-md border-4 border-white">
+                        <div class="absolute bottom-0 right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
+                    </div>
+                    <div class="flex flex-col items-center md:items-start">
+                        <span class="text-xs font-bold text-blue-600 tracking-wider uppercase mb-1">Desarrollado por</span>
+                        <h3 class="font-bold text-slate-800 text-lg">M.en I. Ing. Martín Olvera Corona</h3>
+                        <a href="mailto:incimoc@gmail.com" class="text-sm text-slate-500 hover:text-blue-600 transition-colors flex items-center gap-2 mt-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                            incimoc@gmail.com
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- DATA VIEW -->
+        <section id="view-data" class="view-section hidden">
+            <div class="bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden max-w-5xl mx-auto">
+                <div class="bg-slate-50 px-6 py-4 border-b border-slate-100">
+                    <h3 class="text-lg font-bold text-slate-800">Configuración de la Estación</h3>
+                </div>
+                <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Carretera</label>
+                            <input type="text" id="input-road" class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" placeholder="Ej: México - Querétaro">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Tramo</label>
+                            <input type="text" id="input-section" class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" placeholder="Ej: Palmillas - Querétaro">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Estación</label>
+                                <input type="text" id="input-station" class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" placeholder="E-01">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Km</label>
+                                <input type="text" id="input-km" class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" placeholder="150+000">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Sentido</label>
+                                <select id="input-direction" class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white">
+                                    <option value="S1">S1 (Del cadenamiento)</option>
+                                    <option value="S2">S2 (Contrario al cad.)</option>
+                                    <option value="S0">S0 (Ambos sentidos)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Año más reciente</label>
+                                <input type="number" id="input-year" class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" placeholder="Ej: 2024">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4 flex flex-col">
+                        <label class="block text-sm font-medium text-slate-700 mb-1">
+                            Volúmenes (TDPA)
+                            <span class="text-xs text-slate-500 font-normal ml-2">Orden: Más reciente → Más antiguo (Tabulados)</span>
+                        </label>
+                        <textarea id="input-volumes" class="w-full flex-grow p-4 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-mono text-sm" placeholder="Ej: 5200    5100    4950    4800"></textarea>
+                    </div>
+                </div>
+                
+                <div class="bg-slate-50 px-6 py-4 border-t border-slate-100 flex justify-end">
+                    <button id="btn-process-data" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors shadow-sm flex items-center gap-2">
+                        <span>Procesar Datos</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <div id="data-results" class="mt-8 max-w-5xl mx-auto hidden animate-fade-in">
+                <h3 class="text-xl font-bold text-slate-800 mb-4">Tabla de Datos Históricos</h3>
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-600 text-sm uppercase tracking-wider">
+                                <th class="px-6 py-3 font-semibold border-b border-slate-200">Año</th>
+                                <th class="px-6 py-3 font-semibold border-b border-slate-200 text-right">TDPA (Veh)</th>
+                                <th class="px-6 py-3 font-semibold border-b border-slate-200 text-right">T. Crec (%)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body" class="text-sm text-slate-700 divide-y divide-slate-100">
+                            <!-- JS Generated Rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- GENERIC REGRESSION VIEW TEMPLATE (Cloned by JS for Linear, Exp, Log) -->
+        <div id="template-regression" class="hidden">
+            <div class="bg-white rounded-2xl shadow-lg border border-slate-100 p-6 mb-6">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-800 regression-title">Método</h2>
+                        <p class="text-slate-500 text-sm regression-desc">Análisis estadístico</p>
+                    </div>
+                    <div class="mt-4 md:mt-0 bg-blue-50 px-4 py-2 rounded-lg border border-blue-100">
+                        <span class="text-xs text-blue-600 font-bold uppercase tracking-wider">Tasa Media Anual</span>
+                        <div class="text-2xl font-bold text-blue-700 regression-rate">0.00%</div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 bg-slate-50 rounded-xl p-4 border border-slate-200">
+                        <canvas class="regression-chart w-full h-64 md:h-80"></canvas>
+                    </div>
+                    <div class="space-y-6">
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                            <h4 class="text-sm font-semibold text-slate-500 uppercase mb-2">Fórmula Calculada</h4>
+                            <div class="text-lg font-mono font-bold text-slate-800 break-all regression-formula">y = ...</div>
+                        </div>
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                            <h4 class="text-sm font-semibold text-slate-500 uppercase mb-2">Coeficiente (R²)</h4>
+                            <div class="flex items-center gap-2">
+                                <div class="text-3xl font-bold text-slate-800 regression-r2">0.0000</div>
+                                <div class="h-2 flex-grow bg-slate-100 rounded-full overflow-hidden">
+                                    <div class="h-full bg-green-500 regression-r2-bar" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-2">Valores cercanos a 1.0 indican mejor ajuste.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- LINEAR VIEW -->
+        <section id="view-linear" class="view-section hidden"></section>
+
+        <!-- EXPONENTIAL VIEW -->
+        <section id="view-exponential" class="view-section hidden"></section>
+
+        <!-- LOGARITHMIC VIEW -->
+        <section id="view-logarithmic" class="view-section hidden"></section>
+
+        <!-- INTERPRETATION VIEW -->
+        <section id="view-interpretation" class="view-section hidden">
+            <div class="max-w-4xl mx-auto space-y-6">
+                <div class="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl shadow-xl p-8 text-white relative overflow-hidden">
+                    <div class="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-white opacity-10 rounded-full blur-3xl"></div>
+                    <h2 class="text-3xl font-bold mb-4 relative z-10">Interpretación Inteligente</h2>
+                    <p class="text-indigo-100 mb-6 relative z-10">Nuestro motor de IA analiza los 3 modelos estadísticos para recomendarte la mejor opción para tu proyecto de ingeniería.</p>
+                    <button id="btn-generate-ai" class="bg-white text-indigo-700 font-bold py-3 px-8 rounded-full shadow-lg hover:bg-indigo-50 transition-all transform hover:scale-105 active:scale-95 flex items-center gap-2 relative z-10">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"></path></svg>
+                        Generar Análisis
+                    </button>
+                    <!-- PDF Download button inside Interpretation view as well -->
+                    <button id="btn-download-pdf-alt" class="mt-4 w-full bg-slate-800 bg-opacity-30 text-white font-medium py-2 px-4 rounded-lg hover:bg-opacity-50 transition-all flex justify-center items-center gap-2 relative z-10 text-sm">
+                        <span>Descargar Memoria Ejecutiva (PDF)</span>
+                    </button>
+                </div>
+
+                <div id="ai-loading" class="hidden">
+                    <div class="flex flex-col items-center justify-center py-12">
+                        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
+                        <p class="text-slate-500 font-medium">Analizando tendencias de tráfico...</p>
+                    </div>
+                </div>
+
+                <div id="ai-result" class="hidden bg-white rounded-2xl shadow-sm border border-slate-100 p-8 animate-fade-in">
+                    <div class="prose prose-slate max-w-none">
+                        <h3 class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                            <span class="text-2xl">💡</span> Resultado del Análisis
+                        </h3>
+                        <div id="ai-content" class="text-slate-600 leading-relaxed whitespace-pre-wrap">
+                            <!-- AI Content here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Hidden container for PDF generation -->
+        <div id="pdf-chart-container" class="absolute top-0 -left-[9999px] w-[800px] bg-white">
+            <canvas id="pdf-canvas" width="800" height="400"></canvas>
+        </div>
+
+    </main>
+<script type="module" src="/index.tsx"></script>
+</body>
+</html>
